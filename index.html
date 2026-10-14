@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="今天吃什么">
+<meta name="theme-color" content="#e8590c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>今天吃什么 · 百道名菜</title>
+<style>*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#fff8f0; --card:#ffffff; --ink:#2b1d14; --muted:#8a7566;
+  --line:#f0e2d4; --accent:#e8590c; --accent2:#c92a2a;
+  --xiang:#d9480f; --chuan:#c92a2a; --hui:#2f6b3a; --yue:#0b7285;
+}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--ink); min-height:100vh;
+  background-image:radial-gradient(circle at 12% 8%,rgba(232,89,12,.08),transparent 42%),radial-gradient(circle at 88% 4%,rgba(11,114,133,.08),transparent 40%);
+  background-attachment:fixed;
+}
+.wrap{max-width:760px;margin:0 auto;padding:18px 16px 90px}
+header.top{display:flex;align-items:center;gap:12px;margin:6px 0 16px}
+.logo{font-size:34px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.12))}
+h1{font-size:22px;margin:0;letter-spacing:.5px}
+h1 small{display:block;font-size:12px;color:var(--muted);font-weight:400;letter-spacing:1px;margin-top:3px}
+.rollbar{margin:4px 0 14px}
+.rollbtn{
+  width:100%;border:0;border-radius:18px;padding:18px;cursor:pointer;
+  background:linear-gradient(135deg,#ff8a3d,#e8590c 55%,#c92a2a);
+  color:#fff;font-size:19px;font-weight:700;letter-spacing:1px;
+  box-shadow:0 10px 24px rgba(232,89,12,.35); transition:transform .12s,box-shadow .12s;
+}
+.rollbtn:active{transform:scale(.98);box-shadow:0 5px 14px rgba(232,89,12,.35)}
+.rollbtn span{display:block;font-size:12px;font-weight:400;opacity:.9;letter-spacing:2px;margin-top:4px}
+.tools{display:flex;gap:8px;align-items:center;margin:2px 0 10px;flex-wrap:wrap}
+.search{flex:1;min-width:150px;position:relative}
+.search input{
+  width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;
+  padding:11px 13px;font-size:15px;color:var(--ink);outline:none;
+}
+.search input:focus{border-color:var(--accent)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--muted);
+  border-radius:999px;padding:8px 15px;font-size:14px;cursor:pointer;white-space:nowrap;transition:.15s;
+}
+.chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.stat{font-size:12.5px;color:var(--muted);margin:2px 2px 12px}
+.stat b{color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
+.hint{text-align:center;color:#b3a091;font-size:12px;margin:26px 0 0;line-height:1.6}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;
+  cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s;position:relative;overflow:hidden;
+}
+.card:active{transform:scale(.97)}
+.card:hover{box-shadow:0 8px 20px rgba(120,80,40,.12);border-color:#e6cdb6}
+.thumb{position:relative;height:98px;border-radius:12px;overflow:hidden;background:#fdf1e6;display:flex;align-items:center;justify-content:center}
+.thumb .emoji{font-size:40px;line-height:1}
+.thumb img.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.card .nm{font-size:15.5px;font-weight:600;margin:9px 0 6px;line-height:1.25}
+.card .mn{font-size:11.5px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tag{font-size:10.5px;padding:2px 7px;border-radius:6px;color:#fff;font-weight:600}
+.t-xiang{background:var(--xiang)}.t-chuan{background:var(--chuan)}.t-hui{background:var(--hui)}.t-yue{background:var(--yue)}.t-zaocan{background:#e08c00}
+.badge{position:absolute;top:7px;left:7px;z-index:2;font-size:10.5px;font-weight:700;color:#8a5a00;background:#ffe9b8;border:1px solid #ffd27a;border-radius:7px;padding:2px 7px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.fav{position:absolute;top:9px;right:10px;font-size:17px;opacity:.28;transition:.15s}
+.card.faved .fav{opacity:1}
+.empty{text-align:center;color:var(--muted);padding:50px 0;font-size:15px}
+
+/* roll overlay */
+#roll{position:fixed;inset:0;background:rgba(20,10,5,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:60;padding:24px}
+#roll.show{display:flex}
+.rollbox{background:#fff;border-radius:22px;padding:30px 24px;text-align:center;min-width:230px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.rollbox .cap{font-size:13px;color:var(--muted);letter-spacing:2px;margin-bottom:14px}
+#rollName{font-size:27px;font-weight:800;color:var(--accent);min-height:38px;line-height:1.2}
+
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(20,10,5,.55);backdrop-filter:blur(2px);display:none;z-index:70;align-items:flex-end;justify-content:center}
+#modal.show{display:flex}
+.sheet{background:#fff;width:100%;max-width:760px;max-height:92vh;overflow-y:auto;border-radius:22px 22px 0 0;animation:up .28s ease}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:translateY(0);opacity:1}}
+.sheet .head{padding:20px 20px 16px;color:#fff;position:relative}
+.sheet .head .big{font-size:46px;line-height:1}
+.sheet .head h2{margin:8px 0 8px;font-size:24px;letter-spacing:.5px}
+.sheet .head .tags{display:flex;gap:8px;flex-wrap:wrap;font-size:12px}
+.sheet .head .tags span{background:rgba(255,255,255,.22);border-radius:8px;padding:3px 9px}
+.xclose{position:absolute;top:14px;right:16px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.22);color:#fff;border:0;font-size:18px;cursor:pointer}
+.bg-xiang{background:linear-gradient(135deg,#ff9a5a,#d9480f)}
+.bg-chuan{background:linear-gradient(135deg,#f0655e,#c92a2a)}
+.bg-hui{background:linear-gradient(135deg,#6fae7d,#2f6b3a)}
+.bg-yue{background:linear-gradient(135deg,#4fb3c4,#0b7285)}
+.bg-zaocan{background:linear-gradient(135deg,#ffc14d,#e08c00)}
+.sheet .body{padding:16px 20px 28px}
+.banner{height:210px;border-radius:16px;overflow:hidden;margin-bottom:20px;display:none}
+.banner img{width:100%;height:100%;object-fit:cover;display:block}
+.sec{margin-bottom:20px}
+.sec h3{font-size:15px;margin:0 0 10px;color:var(--accent);letter-spacing:.5px;display:flex;align-items:center;gap:7px}
+.sec h3::before{content:"";width:4px;height:15px;background:var(--accent);border-radius:2px}
+.ing{background:#fff7ef;border:1px dashed #f0c9a0;border-radius:12px;padding:12px 14px;font-size:14.5px;line-height:1.7;color:#7a4a20}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+ol.steps li{position:relative;padding:0 0 14px 36px;font-size:15px;line-height:1.68;counter-increment:s}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+ol.steps li:last-child{padding-bottom:0}
+.tip{background:#eef7ee;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.65;color:#2f6b3a}
+.actions{display:flex;gap:10px;margin-top:6px}
+.actions button{flex:1;border:0;border-radius:14px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;transition:.12s}
+.actions button:active{transform:scale(.98)}
+.btn-reroll{background:linear-gradient(135deg,#ff8a3d,#e8590c);color:#fff}
+.btn-fav{background:#fff3e6;color:var(--accent);border:1px solid #f0c9a0!important}
+.btn-fav.on{background:#ffe08a;color:#7a4a20}
+
+.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);background:rgba(40,25,15,.92);color:#fff;padding:11px 20px;border-radius:12px;font-size:14px;opacity:0;transition:.28s;z-index:90;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">🍚</div>
+    <h1>今天吃什么<small id="subtitle">湘川徽粤 · 含快手早餐</small></h1>
+  </header>
+
+  <div class="rollbar">
+    <button class="rollbtn" id="btnRoll">🎲 随机点菜<span>选择困难？交给命运</span></button>
+  </div>
+
+  <div class="tools">
+    <div class="search"><input id="q" type="search" placeholder="🔍 搜菜名 / 食材，如：鱼头、排骨"></div>
+  </div>
+
+  <div class="chips" id="chips"></div>
+  <div class="stat" id="stat"></div>
+  <div class="grid" id="grid"></div>
+  <p class="hint">📱 想当 App 用？手机浏览器菜单 →「添加到主屏幕」，即可离线使用</p>
+</div>
+
+<div id="roll"><div class="rollbox"><div class="cap">今 天 就 吃</div><div id="rollName">…</div></div></div>
+
+<div id="modal"><div class="sheet">
+  <div id="sheetHead"></div>
+  <div class="body" id="sheetBody"></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>const DISHES = [
+{n:"剁椒鱼头",c:"湘菜",e:"🐟",t:"40分钟",d:"中等",m:"胖头鱼头、红剁椒、姜、蒜、葱、料酒、蒸鱼豉油、白糖",s:[
+"鱼头从下巴破开成两半，洗净沥干，用料酒、姜片和少许盐腌15分钟。",
+"盘子底部垫上姜片和葱段，鱼头皮朝上平铺。",
+"剁椒加蒜末、少许白糖、蒸鱼豉油拌匀，均匀铺在鱼头上。",
+"水烧开后上锅，大火蒸10–12分钟（鱼头越大时间越长）。",
+"出锅撒葱花，淋一勺滚烫的热油激香即可。"],k:"剁椒本身很咸，别再额外加盐；蒸的时间别过头，过了肉就老。"},
+{n:"辣椒炒肉",c:"湘菜",e:"🌶️",t:"20分钟",d:"简单",m:"五花肉、青尖椒、蒜、姜、豆豉、生抽、老抽、蚝油、白糖",s:[
+"五花肉切薄片；青椒去籽斜切段；蒜切片。",
+"热锅放少许油，下五花肉中火煸炒到出油、边缘微焦，盛出备用。",
+"用锅里底油爆香蒜、姜、豆豉，下青椒大火翻炒到表皮起虎皮。",
+"倒回肉片，加生抽、老抽、蚝油、少许白糖，大火翻匀1分钟出锅。"],k:"青椒要选薄皮的螺丝椒或线椒才香；全程大火快炒，别炒出水。"},
+{n:"毛氏红烧肉",c:"湘菜",e:"🥩",t:"70分钟",d:"中等",m:"五花肉、干辣椒、八角、桂皮、姜、葱、冰糖、料酒、生抽、老抽",s:[
+"五花肉切3厘米方块，冷水下锅加料酒焯水，撇沫后捞出洗净。",
+"锅中放少许油和冰糖，小火炒出琥珀色糖色。",
+"下肉块翻炒上色，加姜、葱、八角、桂皮、干辣椒。",
+"加入热水没过肉，加料酒、生抽、少许老抽，大火烧开后转小火炖40–50分钟。",
+"加盐调味，大火收汁到浓稠发亮。"],k:"一定要加热水，加冷水会让肉变柴；正宗毛氏红烧肉不放酱油只靠糖色。"},
+{n:"口味小龙虾",c:"湘菜",e:"🦞",t:"45分钟",d:"中等",m:"小龙虾、干辣椒、花椒、姜、蒜、豆瓣酱、香叶、八角、啤酒、盐、糖",s:[
+"小龙虾用刷子刷净，剪去虾头尖，抽掉虾线。",
+"油温六成热，下虾炸1分钟至变红，捞出。",
+"锅留底油，炒香姜蒜、花椒、干辣椒和豆瓣酱。",
+"倒回小龙虾，加啤酒、香叶、八角，大火烧开后中火焖10分钟。",
+"加盐、糖调味，大火收汁。"],k:"虾线一定要抽；用啤酒去腥又提香，别用清水。"},
+{n:"长沙臭豆腐",c:"湘菜",e:"🍢",t:"25分钟",d:"简单",m:"臭豆腐胚、蒜末、辣椒油、生抽、香醋、香菜、香油、高汤",s:[
+"取现成臭豆腐胚，沥干水分。",
+"调汁：蒜末、生抽、香醋、辣椒油、香油、少许高汤拌匀。",
+"油温六七成热，下豆腐炸到外皮鼓起、颜色金黄。",
+"捞出用筷子在中间戳个小洞，灌入调味汁。",
+"撒香菜、再淋一点辣椒油即可。"],k:"炸两遍更酥脆：第一遍定型，第二遍高温复炸；蘸汁现调现吃。"},
+{n:"擂辣椒皮蛋",c:"湘菜",e:"🥚",t:"15分钟",d:"简单",m:"青椒、皮蛋、蒜、生抽、香醋、香油、盐",s:[
+"青椒洗净，放火上或干锅里烙到表皮焦黑起泡。",
+"去皮去籽，撕成条（或放石臼擂碎）。",
+"皮蛋切块，蒜捣成泥。",
+"青椒、皮蛋、蒜泥放一起，加生抽、香醋、香油、盐擂匀。"],k:"青椒烧到虎皮焦香是关键；加一点米醋更开胃。"},
+{n:"腊味合蒸",c:"湘菜",e:"🍖",t:"50分钟",d:"简单",m:"腊肉、腊肠、腊鸭、姜、干辣椒、豆豉、料酒、辣椒粉",s:[
+"腊味用温水洗净，先上锅蒸15分钟回软，再切薄片。",
+"各种腊味码入碗中，铺上姜丝、豆豉、干辣椒和少许辣椒粉。",
+"淋一勺料酒。",
+"上汽后中火蒸30分钟。",
+"倒扣装盘即可。"],k:"腊味本就很咸，千万别再加盐；蒸前先回软更好切。"},
+{n:"永州血鸭",c:"湘菜",e:"🦆",t:"40分钟",d:"中等",m:"仔鸭、鸭血、青红椒、姜蒜、紫苏、料酒、生抽、盐、茶油",s:[
+"鸭肉剁成小块；鸭血加少许醋防凝（现杀留血最好）。",
+"热油爆香姜蒜，下鸭肉大火炒到变色出油。",
+"加青红椒、料酒、生抽继续翻炒。",
+"加少量水焖10分钟至鸭肉软烂。",
+"关火前倒入鸭血快速翻炒，让鸭肉裹满黑亮的血酱，撒紫苏。"],k:"鸭血一定最后放，全程小火快炒，炒久了会老。"},
+{n:"东安子鸡",c:"湘菜",e:"🐔",t:"40分钟",d:"中等",m:"嫩母鸡或仔鸡、红椒、姜、葱、香醋、花椒粉、料酒、盐、辣椒油",s:[
+"整鸡煮熟（约15分钟），放凉后切条。",
+"热油下姜丝、红椒丝炝锅。",
+"下鸡条翻炒，加料酒、盐。",
+"关键一步：加大量香醋和花椒粉，炒匀。",
+"淋辣椒油、撒葱花出锅。"],k:"东安子鸡以酸辣突出，醋量要足才地道，鸡要嫩。"},
+{n:"湘西外婆菜",c:"湘菜",e:"🥬",t:"20分钟",d:"简单",m:"外婆菜（梅干菜或萝卜干）、肉末、青红椒、蒜、干辣椒、生抽、糖",s:[
+"外婆菜用温水泡软后挤干，切碎。",
+"热油炒散肉末至变色。",
+"下蒜末、干辣椒、青红椒爆香。",
+"加外婆菜翻炒，加生抽、少许糖调味。",
+"大火炒干水汽出锅。"],k:"越炒越香，水分炒干才好吃；配米饭或夹馒头都棒。"},
+{n:"长沙糖油粑粑",c:"湘菜",e:"🍡",t:"30分钟",d:"简单",m:"糯米粉、红糖、蜂蜜、油",s:[
+"糯米粉加温水揉成团，搓成小圆饼。",
+"锅中放油和红糖，小火熬成糖浆。",
+"下粑粑小火煎，一面金黄再翻面。",
+"加少许水焖软，让每块都裹满糖浆。",
+"出锅淋蜂蜜。"],k:"小火慢煎，糖别熬糊；趁热吃外脆内糯。"},
+{n:"常德牛肉粉",c:"湘菜",e:"🍜",t:"2小时",d:"中等",m:"米粉、牛腩或牛肉、牛骨汤、姜、八角、桂皮、豆瓣酱、辣椒、香菜、葱",s:[
+"牛肉切块焯水，加姜和香料炖1.5小时成牛肉汤。",
+"另起锅炒豆瓣酱和辣椒，做成红油码子。",
+"米粉泡软，开水烫1分钟捞入碗中。",
+"浇上牛肉汤、牛肉块和红油。",
+"撒葱花香菜。"],k:"汤头是灵魂，牛骨久炖更浓；米粉别煮太久会烂。"},
+{n:"浏阳粉蒸肉",c:"湘菜",e:"🍚",t:"80分钟",d:"简单",m:"五花肉、蒸肉米粉、豆瓣酱、姜、料酒、腐乳、辣椒粉",s:[
+"五花肉切片，加豆瓣酱、腐乳、姜末、料酒腌30分钟。",
+"裹上蒸肉米粉，可加辣椒粉。",
+"码入碗中。",
+"上汽大火蒸60分钟至软糯。"],k:"米粉要裹均匀；蒸的时间足才入口即化。"},
+{n:"土匪猪肝",c:"湘菜",e:"🥘",t:"15分钟",d:"简单",m:"猪肝、青红椒、姜蒜、泡椒、料酒、生抽、淀粉、盐",s:[
+"猪肝切片，清水泡去血水，加料酒、淀粉抓匀。",
+"大火热油，猪肝快速滑炒至变色立刻盛出。",
+"爆香姜蒜、泡椒、青红椒。",
+"倒回猪肝，加生抽、盐，大火炒30秒出锅。"],k:"猪肝要嫩，全程大火快炒，久炒就老。"},
+{n:"苗家酸汤鱼",c:"湘菜",e:"🐠",t:"35分钟",d:"中等",m:"草鱼或鲤鱼、酸汤、姜、蒜、木姜子、辣椒、葱、盐",s:[
+"鱼切块，用盐和姜腌10分钟。",
+"热油炒酸汤底（番茄或酸汤料），加水烧开。",
+"下鱼块中火煮8分钟。",
+"加木姜子、辣椒、蒜调味。",
+"撒葱花，连汤带鱼上桌。"],k:"木姜子是苗家酸汤的灵魂；鱼别久煮。"},
+{n:"酱板鸭",c:"湘菜",e:"🦆",t:"90分钟",d:"中等",m:"鸭子、生抽、老抽、冰糖、八角、桂皮、辣椒、姜、料酒",s:[
+"鸭子焯水，抹匀老抽。",
+"卤水（生抽、香料、冰糖、辣椒）烧开，下鸭卤40分钟。",
+"捞出风干或用烤箱低温烘干表皮。",
+"刷卤汁再风干，让皮紧肉香。",
+"切块，配辣椒面。"],k:"反复“卤—晾”味道才进得深；买现成卤鸭也可直接切。"},
+{n:"香辣蟹",c:"湘菜",e:"🦀",t:"35分钟",d:"中等",m:"大闸蟹或花蟹、干辣椒、花椒、姜蒜、豆瓣酱、料酒、白糖、葱",s:[
+"蟹刷净，去腮斩块，切口蘸淀粉。",
+"油温烧高，下蟹块炸至变色捞出。",
+"爆香大量姜蒜、干辣椒、花椒和豆瓣酱。",
+"倒回蟹块，加料酒和少许糖翻炒。",
+"炒匀收汁，撒葱段。"],k:"切口裹淀粉能锁住蟹黄不流失。"},
+{n:"酸辣鸡杂",c:"湘菜",e:"🍲",t:"25分钟",d:"简单",m:"鸡胗、鸡肠、泡椒、酸豆角、姜蒜、辣椒、料酒、生抽",s:[
+"鸡杂洗净切好，加料酒焯水。",
+"热油爆香姜蒜、泡椒、酸豆角。",
+"下鸡杂大火翻炒。",
+"加生抽、辣椒调味，炒3分钟。",
+"出锅。"],k:"鸡杂要炒透又别老，大火快炒；酸豆角提味。"},
+{n:"苦瓜炒仔鸭",c:"湘菜",e:"🥒",t:"40分钟",d:"中等",m:"仔鸭、苦瓜、姜、蒜、豆豉、料酒、生抽、盐",s:[
+"鸭肉剁块；苦瓜切片用盐腌去苦水。",
+"热油爆香姜蒜豆豉，下鸭块炒到出油。",
+"加料酒、生抽，加水焖15分钟。",
+"下苦瓜同炒5分钟。",
+"收汁出锅。"],k:"苦瓜先用盐杀水可减苦；苦瓜后放保持脆。"},
+{n:"蒜苗炒腊肉",c:"湘菜",e:"🥓",t:"20分钟",d:"简单",m:"腊肉、蒜苗、干辣椒、姜、生抽、料酒",s:[
+"腊肉蒸软后切片。",
+"热锅下腊肉煸炒出油。",
+"加姜、干辣椒爆香。",
+"下蒜苗段大火快炒。",
+"加少许生抽、料酒炒匀出锅。"],k:"腊肉本身咸香，不用加盐；蒜苗断生即可。"},
+{n:"干锅茶树菇",c:"湘菜",e:"🍄",t:"25分钟",d:"简单",m:"茶树菇、五花肉、青红椒、蒜、干辣椒、豆瓣酱、生抽",s:[
+"茶树菇泡发撕条，挤干水分。",
+"五花肉切片煸炒出油。",
+"加蒜、干辣椒、豆瓣酱炒香。",
+"下茶树菇、青红椒翻炒。",
+"加生抽，干锅收汁。"],k:"茶树菇要挤干水分才香；可加少许高汤焖入味。"},
+{n:"湘西酸菜炒粉皮",c:"湘菜",e:"🍥",t:"20分钟",d:"简单",m:"酸菜、红薯粉皮、五花肉、蒜、辣椒、生抽",s:[
+"粉皮切条，温水泡软。",
+"五花肉煸出油，下蒜和辣椒爆香。",
+"加酸菜炒香。",
+"下粉皮加生抽翻炒。",
+"炒到入味出锅。"],k:"粉皮易粘锅，火别太大，可加少许水。"},
+{n:"豆豉辣椒蒸排骨",c:"湘菜",e:"🍖",t:"35分钟",d:"简单",m:"排骨、豆豉、剁椒、姜、蒜、料酒、生抽、淀粉",s:[
+"排骨斩段，加姜蒜、料酒、生抽、淀粉腌20分钟。",
+"拌入豆豉和剁椒。",
+"平铺盘中。",
+"上汽大火蒸20分钟。",
+"撒葱花。"],k:"拌一点淀粉能锁住肉汁，蒸出来更嫩。"},
+{n:"紫苏黄瓜",c:"湘菜",e:"🥒",t:"15分钟",d:"简单",m:"黄瓜、紫苏、蒜、辣椒、生抽、香醋、香油",s:[
+"黄瓜拍裂切段，加盐腌10分钟后挤水。",
+"紫苏切碎，蒜切末。",
+"加生抽、香醋、香油、辣椒拌匀。",
+"撒紫苏略拌即可。"],k:"拍黄瓜更入味；紫苏最后放才香。"},
+{n:"湘西辣子鸡",c:"湘菜",e:"🐔",t:"35分钟",d:"中等",m:"仔鸡、干辣椒、花椒、姜蒜、料酒、生抽、白芝麻",s:[
+"鸡剁小块，加料酒、姜腌15分钟。",
+"油温烧高，下鸡块炸到外焦捞出。",
+"爆香姜蒜、干辣椒、花椒。",
+"倒回鸡块，加生抽翻炒。",
+"撒白芝麻出锅。"],k:"鸡块先炸后炒，外焦里嫩。"},
+
+{n:"麻婆豆腐",c:"川菜",e:"🧈",t:"25分钟",d:"中等",m:"嫩豆腐、牛肉末、豆瓣酱、豆豉、花椒粉、辣椒面、蒜苗、姜蒜、生抽、淀粉",s:[
+"豆腐切块，放淡盐水中焯1分钟去豆腥，捞出。",
+"热油炒散牛肉末，加豆瓣酱、豆豉、辣椒面炒出红油。",
+"加姜蒜末和适量水烧开。",
+"轻轻下豆腐，小火煮3分钟（晃锅，别用铲子翻动）。",
+"加生抽，水淀粉分两次勾芡，撒花椒粉和蒜苗。"],k:"分次勾芡、出锅撒花椒粉是川味关键；豆腐用晃锅防碎。"},
+{n:"回锅肉",c:"川菜",e:"🥓",t:"40分钟",d:"中等",m:"五花肉、蒜苗、豆瓣酱、豆豉、甜面酱、姜、料酒、白糖",s:[
+"整块五花肉冷水下锅，加姜、料酒煮20分钟至筷子能插入，放凉切大片。",
+"锅中少油，下肉片中火煸到出油、卷曲成灯盏窝状。",
+"把肉拨到一边，下豆瓣酱、豆豉、甜面酱炒出红油。",
+"加蒜苗白段和少许糖翻炒。",
+"下蒜苗叶炒断生出锅。"],k:"肉要煮后放凉再切才不散；煸到微卷才地道。"},
+{n:"宫保鸡丁",c:"川菜",e:"🥜",t:"30分钟",d:"中等",m:"鸡腿肉、花生米、干辣椒、花椒、葱、姜蒜、生抽、醋、糖、料酒、淀粉",s:[
+"鸡肉切丁，加料酒、生抽、淀粉腌15分钟。",
+"调碗汁：糖、醋、生抽、淀粉、水。",
+"热油下鸡丁滑炒变色盛出。",
+"爆香干辣椒、花椒、葱姜蒜。",
+"倒回鸡丁，淋碗汁快速翻炒，加炸花生米炒匀。"],k:"糖醋比例约1:1，酸甜微辣；花生最后放保持脆。"},
+{n:"鱼香肉丝",c:"川菜",e:"🐷",t:"30分钟",d:"中等",m:"猪里脊、木耳、胡萝卜、泡椒、姜蒜、葱、豆瓣酱、醋、糖、生抽、淀粉",s:[
+"里脊切丝，加淀粉、料酒抓匀；木耳、胡萝卜切丝。",
+"调鱼香汁：醋、糖、生抽、淀粉、水（糖醋约2:1）。",
+"滑炒肉丝至变白盛出。",
+"爆香泡椒、姜蒜、豆瓣酱。",
+"下木耳胡萝卜丝和肉丝，淋鱼香汁，加葱花炒匀。"],k:"鱼香是酸甜咸辣兼备、其实没有鱼；泡椒是灵魂。"},
+{n:"水煮鱼",c:"川菜",e:"🐟",t:"40分钟",d:"中等",m:"草鱼或黑鱼、豆芽、干辣椒、花椒、豆瓣酱、姜蒜、蛋清、淀粉",s:[
+"鱼片加盐、蛋清、淀粉腌15分钟。",
+"豆芽焯水后垫在碗底。",
+"炒香豆瓣酱、姜蒜，加水烧开，下鱼头和鱼骨煮5分钟。",
+"下鱼片煮2分钟，连汤倒入碗中。",
+"铺满干辣椒和花椒，浇热油激香。"],k:"鱼片最后下、别煮久；热油要够烫才香。"},
+{n:"水煮肉片",c:"川菜",e:"🥩",t:"35分钟",d:"中等",m:"猪里脊、豆芽或莴笋、干辣椒、花椒、豆瓣酱、姜蒜、淀粉、蛋清",s:[
+"里脊切薄片，加蛋清、淀粉、料酒腌。",
+"垫菜焯水后铺碗底。",
+"炒豆瓣酱、姜蒜后加汤烧开。",
+"下肉片烫熟，连汤倒入碗中。",
+"铺辣椒花椒，浇热油。"],k:"肉片要薄、要滑，下锅后别搅。"},
+{n:"夫妻肺片",c:"川菜",e:"🥢",t:"90分钟",d:"较难",m:"牛肉、牛杂（心舌肚）、卤水、红油、花椒粉、花生碎、芝麻、香菜",s:[
+"牛肉和牛杂卤熟，放凉后切薄片。",
+"调红油汁：红油、卤水、生抽、花椒粉、糖。",
+"肉片浇汁拌匀。",
+"撒花生碎、芝麻、香菜。"],k:"红油要香而不燥；卤味放凉再切不散。"},
+{n:"口水鸡",c:"川菜",e:"🐔",t:"40分钟",d:"中等",m:"鸡腿或整鸡、姜、葱、蒜、花椒、红油、生抽、醋、糖、花生碎、芝麻",s:[
+"鸡加姜葱煮熟（约15分钟），捞出过冰水，皮更爽脆。",
+"斩块摆盘。",
+"调汁：蒜末、红油、生抽、醋、糖、花椒粉、鸡汤拌匀。",
+"浇在鸡上。",
+"撒花生碎、芝麻、葱花。"],k:"煮后冰水激一下是嫩滑的关键。"},
+{n:"担担面",c:"川菜",e:"🍜",t:"25分钟",d:"简单",m:"细面、肉末、芽菜、花生碎、芝麻酱、红油、生抽、醋、花椒粉、葱花",s:[
+"炒香肉末和芽菜，做成臊子。",
+"碗底调汁：芝麻酱、红油、生抽、醋、花椒粉、少许面汤。",
+"面条煮熟捞入碗中。",
+"铺上臊子、花生碎、葱花。"],k:"面要干拌，汁别太多；芽菜是灵魂。"},
+{n:"酸菜鱼",c:"川菜",e:"🐟",t:"40分钟",d:"中等",m:"草鱼、酸菜、泡椒、姜蒜、野山椒、蛋清、淀粉、白胡椒",s:[
+"鱼片加蛋清、淀粉、盐腌；鱼骨切段。",
+"酸菜切段炒香，加泡椒、姜蒜炒。",
+"加水烧开，下鱼骨煮10分钟。",
+"下鱼片煮2分钟。",
+"淋热油，撒葱花。"],k:"酸菜先炒香汤才够味；鱼片嫩滑靠蛋清淀粉。"},
+{n:"辣子鸡",c:"川菜",e:"🌶️",t:"35分钟",d:"中等",m:"鸡、大量干辣椒、花椒、姜蒜、料酒、生抽、芝麻",s:[
+"鸡剁小块腌20分钟。",
+"炸至外酥内嫩捞出。",
+"炒香姜蒜、干辣椒、花椒。",
+"倒回鸡块翻炒。",
+"撒芝麻出锅。"],k:"干辣椒量要足，在辣椒里找鸡才地道。"},
+{n:"毛血旺",c:"川菜",e:"🍲",t:"40分钟",d:"中等",m:"鸭血、毛肚、黄喉、午餐肉、黄豆芽、豆瓣酱、干辣椒、花椒、高汤",s:[
+"鸭血切块焯水；黄豆芽焯水后铺碗底。",
+"炒豆瓣酱、姜蒜，加高汤烧开。",
+"下鸭血、午餐肉煮5分钟。",
+"下毛肚、黄喉烫30秒。",
+"铺辣椒花椒，浇热油。"],k:"毛肚黄喉要后放、快出锅，才脆。"},
+{n:"蒜泥白肉",c:"川菜",e:"🥩",t:"40分钟",d:"简单",m:"五花肉或后腿肉、黄瓜、蒜泥、红油、生抽、醋、糖、花椒",s:[
+"肉整块煮熟放凉，切薄片。",
+"黄瓜切丝垫底，肉片铺上。",
+"调蒜泥红油汁：蒜泥、红油、生抽、醋、糖。",
+"浇汁即可。"],k:"肉片越薄越好；蒜泥要多。"},
+{n:"干煸四季豆",c:"川菜",e:"🫛",t:"20分钟",d:"简单",m:"四季豆、肉末、芽菜、干辣椒、花椒、蒜、生抽",s:[
+"四季豆掰段，锅里煸炒到表皮起皱，盛出。",
+"炒散肉末，加蒜、干辣椒、花椒、芽菜爆香。",
+"倒回四季豆翻炒。",
+"加生抽调味。"],k:"四季豆必须炒透熟，生豆含毒素；表皮起皱是标志。"},
+{n:"蚂蚁上树",c:"川菜",e:"🍝",t:"20分钟",d:"简单",m:"粉丝、肉末、豆瓣酱、姜蒜、葱、生抽、辣椒",s:[
+"粉丝温水泡软。",
+"炒散肉末，加豆瓣酱、姜蒜炒出红油。",
+"加水烧开。",
+"下粉丝翻炒，让粉丝吸汁。",
+"撒葱花。"],k:"粉丝吸汁，水别太多，炒到肉末爬满粉丝。"},
+{n:"泡椒凤爪",c:"川菜",e:"🐾",t:"30分钟+泡制",d:"简单",m:"鸡爪、泡椒、白醋、蒜、姜、花椒、盐、料酒",s:[
+"鸡爪剪指甲，焯水去腥，煮熟（约12分钟）后过凉水。",
+"泡椒连水加白醋、蒜片、花椒、盐调成泡汁。",
+"鸡爪泡入汁中。",
+"冷藏4小时以上入味。"],k:"放冰箱泡一夜更入味；加柠檬片更清爽。"},
+{n:"川味腊肉",c:"川菜",e:"🥓",t:"数天",d:"中等",m:"五花肉、盐、花椒、白酒、老抽、糖、柏枝",s:[
+"肉抹盐、花椒、白酒，腌3天（每天翻面）。",
+"挂起晾2天。",
+"用柏枝或烟熏半天。",
+"风干1周。",
+"吃时蒸或炒。"],k:"家庭可用烤箱低温加烟熏液代替；腌透才不易坏。"},
+{n:"开水白菜",c:"川菜",e:"🥬",t:"3小时",d:"较难",m:"老母鸡、老鸭、排骨、火腿、白菜心、姜、葱",s:[
+"用鸡鸭排骨火腿吊高汤3小时，撇油过滤，反复扫汤至清澈。",
+"取白菜心，焯水后修形。",
+"用清汤把白菜心蒸入味。",
+"浇上扫好的清汤。"],k:"名菜重在高汤，清如开水、味极鲜；家庭可简化但要耐心。"},
+{n:"樟茶鸭",c:"川菜",e:"🦆",t:"2小时",d:"较难",m:"鸭子、茶叶、樟树叶、花椒、盐、葱姜、料酒、甜面酱",s:[
+"鸭子用盐花椒腌4小时。",
+"用茶叶、樟叶烟熏上色。",
+"上锅蒸40分钟。",
+"油锅炸至皮酥。",
+"切块配荷叶饼、甜面酱。"],k:"熏—蒸—炸三步，皮酥肉嫩。"},
+{n:"盐煎肉",c:"川菜",e:"🥩",t:"20分钟",d:"简单",m:"猪后腿肉、青椒、豆瓣酱、豆豉、姜、生抽、糖",s:[
+"肉切薄片。",
+"中火干煸至出油微卷。",
+"下豆瓣酱、豆豉、姜炒香。",
+"下青椒片翻炒。",
+"加生抽、少许糖炒匀。"],k:"与回锅肉相似，但盐煎肉是生肉直接煎。"},
+{n:"咸烧白",c:"川菜",e:"🍖",t:"2小时",d:"中等",m:"五花肉、芽菜或梅干菜、老抽、姜、花椒、生抽、糖",s:[
+"五花肉煮至七成熟，抹老抽，皮朝下炸至起虎皮。",
+"切成厚片，皮朝下码入碗中。",
+"芽菜炒香后铺上，加调料。",
+"上汽蒸1.5小时。",
+"倒扣装盘。"],k:"炸皮出虎皮是关键；蒸得越久越软糯。"},
+{n:"甜烧白",c:"川菜",e:"🍮",t:"1.5小时",d:"中等",m:"五花肉、糯米、豆沙、红糖、猪油",s:[
+"五花肉煮后切成连刀片（底部不断）。",
+"夹入豆沙馅。",
+"糯米蒸熟，拌红糖和猪油。",
+"肉皮朝下码碗，铺上糯米饭。",
+"蒸1小时后倒扣，撒糖。"],k:"甜口代表菜，肥而不腻。"},
+{n:"跷脚牛肉",c:"川菜",e:"🥘",t:"2.5小时",d:"中等",m:"牛肉或牛杂、牛骨、白蔻、草果、花椒、姜、香菜、辣椒面",s:[
+"牛骨加香料熬汤2小时。",
+"牛肉牛杂切薄片。",
+"在高汤中烫熟。",
+"摆盘浇汤。",
+"配干辣椒面蘸碟。"],k:"汤要清淡带药香，蘸辣椒面吃。"},
+{n:"冷吃兔",c:"川菜",e:"🐰",t:"40分钟",d:"中等",m:"兔肉、干辣椒、花椒、姜蒜、料酒、生抽、糖",s:[
+"兔肉切丁，加料酒、姜腌。",
+"油炸至干香捞出。",
+"爆香姜蒜、干辣椒、花椒。",
+"倒回兔丁，加生抽、糖翻炒。",
+"炒干水分，放凉更入味。"],k:"自贡名菜，越嚼越香，冷吃更佳。"},
+{n:"麻辣兔头",c:"川菜",e:"🐰",t:"1小时",d:"中等",m:"兔头、卤水、辣椒、花椒、姜、香料",s:[
+"兔头焯水洗净。",
+"放入卤水中卤40分钟。",
+"捞出。",
+"用辣椒花椒炒制干煸。",
+"趁热啃。"],k:"成都特色，卤后炒更入味。"},
+{n:"钟水饺",c:"川菜",e:"🥟",t:"30分钟",d:"简单",m:"饺子皮、猪肉馅、红油、蒜泥、红糖、生抽、醋",s:[
+"包成小饺子。",
+"煮熟捞出。",
+"调甜红油汁：红糖、生抽、红油、蒜泥。",
+"浇汁即可。"],k:"成都名小吃，甜辣口，不加汤。"},
+{n:"红油抄手",c:"川菜",e:"🥟",t:"30分钟",d:"简单",m:"馄饨皮、猪肉馅、红油、蒜泥、生抽、醋、花椒粉、葱花",s:[
+"包好抄手。",
+"煮熟。",
+"调红油汁。",
+"浇汁撒葱花。"],k:"抄手就是川式馄饨，皮薄馅嫩。"},
+{n:"甜水面",c:"川菜",e:"🍜",t:"30分钟",d:"简单",m:"粗面条、复制酱油、红糖、红油、蒜泥、花椒粉、芝麻酱",s:[
+"粗面煮熟后过凉。",
+"调甜辣汁：复制酱油（红糖加香料熬）、红油、蒜泥、芝麻酱。",
+"拌面。",
+"撒花椒粉。"],k:"面条粗、有嚼劲，甜辣浓稠。"},
+{n:"川北凉粉",c:"川菜",e:"🍥",t:"15分钟",d:"简单",m:"豌豆凉粉、红油、蒜泥、生抽、醋、花椒粉、豆豉",s:[
+"凉粉切条或刮丝。",
+"调汁：红油、蒜泥、生抽、醋、花椒粉、豆豉。",
+"浇汁拌匀。"],k:"凉粉冰镇后才够爽口。"},
+{n:"麻辣烫",c:"川菜",e:"🍢",t:"30分钟",d:"简单",m:"各种蔬菜、丸子、豆皮、粉丝、郫县豆瓣、香料、辣椒、花椒",s:[
+"熬麻辣汤底：豆瓣、香料、辣椒、花椒。",
+"食材穿串或直接下锅。",
+"按耐煮程度依次下锅。",
+"煮熟捞出。",
+"浇汤、撒辣椒面和芝麻。"],k:"汤底是灵魂，可加牛奶更香浓。"},
+{n:"冒菜",c:"川菜",e:"🍲",t:"30分钟",d:"简单",m:"各种食材、火锅底料、姜蒜、高汤、香菜",s:[
+"火锅底料加姜蒜炒香，加高汤烧开。",
+"耐煮的食材先下。",
+"易熟的后下。",
+"煮好盛碗。",
+"浇原汤、撒香菜。"],k:"一人份火锅，荤素随意。"},
+{n:"万州烤鱼",c:"川菜",e:"🐟",t:"1小时",d:"中等",m:"草鱼、豆芽、芹菜、土豆、豆瓣酱、干辣椒、花椒、姜蒜、孜然",s:[
+"鱼剖开打花刀，腌味。",
+"油煎或烤至两面金黄，放盘中。",
+"炒料：豆瓣、辣椒、花椒、姜蒜、孜然。",
+"配菜炒好后铺在鱼上，浇料汁。",
+"上桌小火慢煨，边吃边加热。"],k:"鱼先烤后浇料，皮焦肉嫩。"},
+{n:"豆瓣鱼",c:"川菜",e:"🐟",t:"30分钟",d:"中等",m:"鲤鱼或鲫鱼、郫县豆瓣、姜蒜、葱、料酒、糖、醋、淀粉",s:[
+"鱼打花刀，煎至两面金黄。",
+"炒香豆瓣、姜蒜。",
+"加水、料酒、糖、醋烧开。",
+"下鱼小火烧8分钟。",
+"勾芡、撒葱花。"],k:"郫县豆瓣要炒出红油才香。"},
+{n:"宜宾燃面",c:"川菜",e:"🍜",t:"20分钟",d:"简单",m:"碱水面、芽菜、花生碎、肉末、红油、芝麻、葱、生抽",s:[
+"面煮偏硬，捞出沥干。",
+"拌红油、生抽、肉末、芽菜。",
+"撒花生碎、芝麻、葱。",
+"拌匀即食。"],k:"油重无水，可以点燃，故名燃面。"},
+{n:"富顺豆花",c:"川菜",e:"🥣",t:"1小时",d:"中等",m:"黄豆、石膏或内酯、辣椒、豆瓣、花椒、香葱、木姜油",s:[
+"黄豆泡发打浆，煮开过滤。",
+"点卤（石膏或内酯）成豆花。",
+"调蘸水。",
+"豆花配蘸水吃。"],k:"豆花要嫩；蘸水是灵魂，加木姜油更香。"},
+
+{n:"臭鳜鱼",c:"徽菜",e:"🐟",t:"40分钟",d:"中等",m:"鳜鱼、姜蒜、辣椒、五花肉、豆瓣酱、料酒、老抽、糖",s:[
+"取腌好发酵的臭鳜鱼（买现成的最省事）。",
+"洗净擦干，两面煎至定型金黄。",
+"爆香姜蒜、辣椒、五花肉丁。",
+"加料酒、老抽、糖和水，下鱼烧15分钟。",
+"收汁，撒葱花。"],k:"蒜瓣肉、闻着臭吃着香；家庭建议买腌制好的。"},
+{n:"毛豆腐",c:"徽菜",e:"🧆",t:"15分钟",d:"简单",m:"毛豆腐（买现成）、辣椒酱、姜蒜、生抽、糖",s:[
+"毛豆腐表面带白毛，轻拿轻放。",
+"平底锅少油，小火煎至两面金黄微焦。",
+"调辣椒酱汁。",
+"蘸食或浇汁。"],k:"家庭自制发酵风险高，建议买成品；煎到外壳酥、里面嫩。"},
+{n:"徽州一品锅",c:"徽菜",e:"🍲",t:"1.5小时",d:"中等",m:"五花肉、鸡块、笋干、豆腐、丸子、粉丝、白菜、香菇、高汤",s:[
+"底层铺白菜、笋干、粉丝。",
+"中层放五花肉、鸡块、丸子。",
+"上层放豆腐、香菇。",
+"加高汤。",
+"小火慢炖1.5小时，一层层吃。"],k:"讲究荤素分层码放，越炖越香。"},
+{n:"火腿炖甲鱼",c:"徽菜",e:"🐢",t:"1.5小时",d:"较难",m:"甲鱼、火腿、姜、葱、料酒、冰糖",s:[
+"甲鱼处理干净后焯水（请摊主代处理）。",
+"火腿切片。",
+"甲鱼、火腿加姜葱料酒和水，小火炖1.5小时。",
+"加冰糖调味。"],k:"汤清味鲜，重火候；甲鱼处理要请专业人员。"},
+{n:"黄山炖鸽",c:"徽菜",e:"🕊️",t:"1.5小时",d:"中等",m:"鸽子、山药或香菇、枸杞、姜、料酒、盐",s:[
+"鸽子焯水。",
+"与山药、香菇、姜一起放入炖盅。",
+"加料酒和清水。",
+"隔水炖1.5小时。",
+"加盐、枸杞。"],k:"隔水炖出来的汤清味醇。"},
+{n:"符离集烧鸡",c:"徽菜",e:"🍗",t:"2小时",d:"中等",m:"鸡、老卤、八角、桂皮、花椒、丁香、冰糖、酱油",s:[
+"鸡抹蜂蜜或糖稀，油炸上色。",
+"放入老卤中。",
+"小火卤1.5小时。",
+"关火浸泡过夜。",
+"提起脱骨即食。"],k:"老卤越陈越香；成品肉烂脱骨。"},
+{n:"无为板鸭",c:"徽菜",e:"🦆",t:"数天",d:"中等",m:"麻鸭、盐、花椒、姜、葱、料酒",s:[
+"鸭用盐、花椒腌1天。",
+"风干2天。",
+"上锅蒸40分钟。",
+"切块。"],k:"咸香紧实，蒸后切片。"},
+{n:"李鸿章大杂烩",c:"徽菜",e:"🥘",t:"1小时",d:"中等",m:"鸡、海参、鱿鱼、火腿、香菇、白菜、粉丝、高汤",s:[
+"各种食材分别处理干净。",
+"一起下锅加高汤。",
+"大火烧开后小火炖。",
+"调味勾芡。"],k:"名菜源于杂，荤素一锅鲜。"},
+{n:"方腊鱼",c:"徽菜",e:"🐟",t:"40分钟",d:"中等",m:"草鱼、番茄酱、糖、醋、姜、淀粉",s:[
+"鱼打花刀，挂糊油炸至酥。",
+"调糖醋番茄汁。",
+"浇在鱼上。"],k:"酸甜造型菜，讲究刀工。"},
+{n:"问政山笋",c:"徽菜",e:"🎋",t:"40分钟",d:"简单",m:"春笋、火腿、鸡油、盐、高汤",s:[
+"春笋切滚刀块。",
+"加火腿片、高汤。",
+"小火煨30分钟。",
+"淋鸡油。"],k:"徽州名菜，重笋的本鲜。"},
+{n:"中和汤",c:"徽菜",e:"🥣",t:"30分钟",d:"简单",m:"豆腐、香菇、火腿、虾米、笋、高汤、淀粉",s:[
+"各种配料切丁。",
+"加高汤煮开。",
+"调味勾芡。",
+"撒胡椒粉。"],k:"徽州汤菜，清鲜勾芡。"},
+{n:"徽州裹粽",c:"徽菜",e:"🍙",t:"2.5小时",d:"中等",m:"糯米、粽叶、五花肉、酱油、盐",s:[
+"糯米泡4小时，拌酱油。",
+"五花肉腌味。",
+"粽叶包入糯米和肉。",
+"煮2小时。"],k:"徽州粽是咸口，肉香米糯。"},
+{n:"蜜汁红芋",c:"徽菜",e:"🍠",t:"30分钟",d:"简单",m:"红心红薯、冰糖、蜂蜜、油",s:[
+"红薯去皮切块。",
+"油炸至金黄。",
+"熬冰糖浆。",
+"下红薯裹糖，淋蜂蜜。"],k:"徽州甜菜，外甜内软。"},
+{n:"红烧划水",c:"徽菜",e:"🐟",t:"30分钟",d:"中等",m:"草鱼尾、姜蒜、豆瓣酱、生抽、糖、料酒、葱花",s:[
+"鱼尾洗净擦干，划几刀。",
+"煎至两面金黄。",
+"加姜蒜、豆瓣酱、料酒、糖和水烧开。",
+"中火烧10分钟收汁。",
+"撒葱花。"],k:"划水指鱼尾，肉嫩味浓。"},
+{n:"屯溪醉蟹",c:"徽菜",e:"🦀",t:"数天",d:"中等",m:"河蟹、黄酒、白酒、姜、盐、花椒",s:[
+"蟹刷净。",
+"用黄酒、白酒、姜、盐、花椒调醉汁。",
+"蟹浸泡在醉汁中。",
+"冷藏3天。",
+"生醉食用（或蒸熟再醉）。"],k:"生腌需谨慎，肠胃弱者建议蒸熟再醉。"},
+
+{n:"白切鸡",c:"粤菜",e:"🐔",t:"40分钟",d:"中等",m:"三黄鸡、姜、葱、盐、油",s:[
+"整鸡冷水下锅，加姜葱，水保持微沸浸煮15–20分钟（三提三放更嫩）。",
+"捞出立刻过冰水，皮更爽脆。",
+"斩件摆盘。",
+"调姜葱蓉蘸料：姜末、葱花、盐，浇热油。"],k:"要浸熟而非大火滚煮，肉才滑；冰水激皮是关键。"},
+{n:"烧鹅",c:"粤菜",e:"🦢",t:"1.5小时",d:"较难",m:"鹅、五香粉、盐、糖、麦芽糖、白醋、姜、蒜",s:[
+"鹅抹盐、五香粉腌内腔。",
+"淋皮水（麦芽糖加白醋）后晾干。",
+"挂入烤箱或炭火烤50分钟。",
+"中途翻面刷油。",
+"斩件配酸梅酱。"],k:"皮要脆，晾皮干燥是关键；家庭用烤箱也能做。"},
+{n:"蜜汁叉烧",c:"粤菜",e:"🥓",t:"1小时",d:"简单",m:"梅头肉、叉烧酱、蜂蜜、生抽、老抽、料酒、蒜、糖",s:[
+"肉切长条，用叉烧酱、生抽、糖、蒜腌4小时（过夜更佳）。",
+"烤箱200℃烤20分钟。",
+"翻面刷蜂蜜再烤15分钟。",
+"再刷一层蜜汁。",
+"切片。"],k:"肥瘦相间的梅头肉最好；刷蜂蜜上色增亮。"},
+{n:"豉汁蒸排骨",c:"粤菜",e:"🍖",t:"30分钟",d:"简单",m:"排骨、豆豉、蒜、姜、生抽、蚝油、淀粉、糖、油",s:[
+"排骨斩小段，泡水去血。",
+"加豆豉、蒜末、生抽、蚝油、糖、淀粉、油抓匀腌20分钟。",
+"平铺盘中。",
+"大火蒸12分钟。",
+"撒葱花。"],k:"加淀粉和油锁住肉汁，蒸出来嫩滑。"},
+{n:"虾饺",c:"粤菜",e:"🥟",t:"50分钟",d:"较难",m:"澄面、生粉、虾仁、肥肉粒、笋、盐、糖、胡椒",s:[
+"澄面加开水烫成面团。",
+"虾仁打胶，拌肥肉、笋调味。",
+"擀皮包成月牙饺。",
+"大火蒸6分钟。",
+"皮透明能看见虾即可。"],k:"要用开水烫面皮才透明；虾现打才弹。"},
+{n:"干蒸烧卖",c:"粤菜",e:"🥟",t:"40分钟",d:"中等",m:"烧卖皮、猪肉、虾仁、香菇、生抽、淀粉",s:[
+"馅料剁碎拌匀调味。",
+"包成开口烧卖。",
+"顶部点虾仁或蟹子。",
+"大火蒸8分钟。"],k:"广式早茶四大天王之一，猪肉虾仁各半。"},
+{n:"广式肠粉",c:"粤菜",e:"🍥",t:"30分钟",d:"中等",m:"粘米粉、澄面、水、鸡蛋、肉末、虾、生菜、豉油",s:[
+"调好米浆：粘米粉、澄面加水。",
+"蒸盘刷油，倒薄薄一层米浆，加蛋或肉。",
+"大火蒸2分钟至起泡。",
+"用刮板卷起。",
+"淋豉油。"],k:"米浆要稀，蒸得薄才滑。"},
+{n:"艇仔粥",c:"粤菜",e:"🍚",t:"1小时",d:"简单",m:"大米、鱼片、鱿鱼、猪皮、花生、油条、姜、葱",s:[
+"大米熬成绵软的粥底。",
+"配料切好。",
+"碗中放生鱼片、鱿鱼等。",
+"浇滚烫的粥底烫熟。",
+"撒花生、油条碎、葱花。"],k:"广式粥要绵；滚粥烫生料才鲜。"},
+{n:"及第粥",c:"粤菜",e:"🍚",t:"1小时",d:"简单",m:"大米、猪肝、猪腰、瘦肉、姜、葱",s:[
+"熬好粥底。",
+"猪肝、猪腰切薄片腌味。",
+"粥中下料烫熟。",
+"调味撒葱。"],k:"料要嫩，粥要绵。"},
+{n:"广式煲仔饭",c:"粤菜",e:"🍚",t:"40分钟",d:"中等",m:"丝苗米、腊肠或腊肉、鸡、青菜、豉油、油",s:[
+"砂锅刷油，放米加水煮开。",
+"水将干时铺上腊味和肉。",
+"转小火焗10分钟。",
+"沿锅边淋油出锅巴。",
+"淋豉油，拌匀。"],k:"锅巴是灵魂，听到滋滋声就好。"},
+{n:"清蒸石斑鱼",c:"粤菜",e:"🐟",t:"25分钟",d:"中等",m:"石斑鱼、姜、葱、蒸鱼豉油、油",s:[
+"鱼处理干净，两面划刀，抹少许盐。",
+"盘底垫姜葱，鱼身放姜丝。",
+"水开后大火蒸8分钟。",
+"倒掉腥水，铺上葱丝。",
+"淋蒸鱼豉油，浇热油。"],k:"蒸鱼要大火快蒸，时间按鱼大小；关火虚蒸2分钟更嫩。"},
+{n:"白灼虾",c:"粤菜",e:"🦐",t:"15分钟",d:"简单",m:"鲜虾、姜、葱、生抽、料酒",s:[
+"虾洗净去虾线。",
+"水中加姜葱料酒烧开。",
+"下虾煮1–2分钟至变红。",
+"捞出过冰水。",
+"配姜丝豉油蘸食。"],k:"别煮过，虾身弯成C形就好。"},
+{n:"姜葱炒蟹",c:"粤菜",e:"🦀",t:"30分钟",d:"中等",m:"花蟹、姜、葱、蒜、料酒、生抽、糖、淀粉",s:[
+"蟹斩块，切口蘸淀粉。",
+"油炸或煎至变色。",
+"爆香大量姜片、葱段。",
+"倒回蟹，加料酒、生抽、糖翻炒。",
+"勾薄芡出锅。"],k:"姜葱要多，去腥提香。"},
+{n:"菠萝咕噜肉",c:"粤菜",e:"🍍",t:"40分钟",d:"中等",m:"猪里脊、菠萝、青红椒、番茄酱、糖、醋、淀粉、蛋",s:[
+"肉切块，裹蛋液淀粉，炸至金黄。",
+"复炸一次更脆。",
+"炒番茄酱、糖、醋成汁。",
+"下菠萝、青红椒和肉块翻炒裹汁。",
+"出锅。"],k:"酸甜开胃，肉要外脆里嫩。"},
+{n:"蚝油生菜",c:"粤菜",e:"🥬",t:"10分钟",d:"简单",m:"生菜、蚝油、蒜、生抽、淀粉",s:[
+"生菜焯水10秒捞出摆盘（或快炒）。",
+"爆香蒜末。",
+"加蚝油、生抽、水烧开。",
+"勾薄芡。",
+"浇在生菜上。"],k:"生菜断生即可，保持爽脆。"},
+{n:"干炒牛河",c:"粤菜",e:"🍜",t:"25分钟",d:"中等",m:"河粉、牛肉、豆芽、洋葱、韭黄、生抽、老抽、油",s:[
+"牛肉切片腌味，滑炒后盛出。",
+"河粉用手撕散（别用刀切）。",
+"大火热锅下河粉，干炒、别翻动太勤。",
+"加生抽、老抽炒匀上色。",
+"下牛肉、豆芽、韭黄炒匀。"],k:"河粉要干爽不断，讲究镬气。"},
+{n:"沙茶牛肉",c:"粤菜",e:"🐮",t:"20分钟",d:"简单",m:"牛肉、沙茶酱、芥蓝、姜、生抽、淀粉",s:[
+"牛肉切片腌味。",
+"滑炒牛肉盛出。",
+"炒芥蓝。",
+"加沙茶酱和牛肉翻炒。",
+"炒匀出锅。"],k:"潮汕风味，沙茶酱是灵魂。"},
+{n:"广式老火靓汤",c:"粤菜",e:"🍲",t:"2小时",d:"简单",m:"猪骨或鸡、玉米、胡萝卜、山药、红枣、枸杞、姜",s:[
+"肉类焯水。",
+"所有食材入煲，加足量水。",
+"大火烧开后转小火煲2小时。",
+"加盐调味。"],k:"老火汤讲究煲足时间，但别加太多盐。"},
+{n:"盐焗鸡",c:"粤菜",e:"🐔",t:"1小时",d:"中等",m:"鸡、粗盐、沙姜、姜、葱",s:[
+"鸡抹沙姜粉、盐腌30分钟。",
+"用纸把鸡包好。",
+"砂锅铺粗盐，把鸡埋进去。",
+"中火焗40分钟。",
+"取出撕条或斩件。"],k:"盐焗锁住鲜味，肉香而不柴。"},
+{n:"豉油鸡",c:"粤菜",e:"🍗",t:"40分钟",d:"简单",m:"鸡、生抽、老抽、冰糖、姜、葱、八角、桂皮、料酒",s:[
+"调豉油汁：生抽、老抽、冰糖加香料烧开。",
+"整鸡下锅，中火浸煮。",
+"反复翻动淋汁，煮25分钟。",
+"关火焖10分钟。",
+"斩件淋汁。"],k:"皮亮肉滑，豉油汁可以重复使用。"},
+{n:"冬瓜盅",c:"粤菜",e:"🥒",t:"1小时",d:"中等",m:"小冬瓜、鸡肉、虾仁、香菇、火腿、高汤",s:[
+"冬瓜挖空做成盅。",
+"配料切丁。",
+"填入冬瓜，加高汤。",
+"上锅蒸40分钟。",
+"连盅上桌。"],k:"清热消暑，汤鲜料足。"},
+{n:"荷叶饭",c:"粤菜",e:"🍚",t:"45分钟",d:"中等",m:"糯米、鸡肉、香菇、腊肠、荷叶",s:[
+"糯米泡软蒸半熟。",
+"配料炒香后拌入。",
+"用荷叶包好。",
+"大火蒸30分钟。",
+"拆叶即食。"],k:"荷叶清香，米糯料香。"},
+{n:"咸鱼茄子煲",c:"粤菜",e:"🍆",t:"30分钟",d:"简单",m:"咸鱼、茄子、肉末、蒜、姜、生抽、蚝油",s:[
+"茄子切条泡水。",
+"煎咸鱼，炒肉末。",
+"茄子过油或煎软。",
+"全部入煲加调料。",
+"小火焖10分钟。"],k:"咸鱼茄子是绝配，茄子要软糯。"},
+{n:"大良炒鲜奶",c:"粤菜",e:"🥛",t:"20分钟",d:"较难",m:"水牛奶、蛋清、虾仁、火腿粒、淀粉、盐",s:[
+"牛奶加蛋清、淀粉调匀。",
+"热锅温油，下奶浆。",
+"快速推炒至凝固成块。",
+"加虾仁、火腿粒。",
+"立即出锅。"],k:"火候是关键，油温不能高，否则会变老。"},
+{n:"姜撞奶",c:"粤菜",e:"🥛",t:"15分钟",d:"简单",m:"水牛奶、姜汁、糖",s:[
+"鲜姜榨汁，每碗放1勺。",
+"牛奶加糖加热到70–80℃。",
+"快速冲入姜汁碗中。",
+"静置3分钟凝固。"],k:"温度是成败关键，太烫太凉都不成型。"},
+
+{n:"溏心水煮蛋",c:"早餐",e:"🥚",t:"10分钟",d:"超简单",m:"鸡蛋、水、盐、白醋",s:[
+"鸡蛋室温回温（冷藏蛋易裂），冷水下锅没过鸡蛋。",
+"加少许盐和白醋，防裂又好剥壳。",
+"水开后计时：溏心6分钟，全熟10分钟。",
+"捞出立刻放凉水/冰水里泡2分钟。",
+"敲碎蛋壳，从大头开始剥。"],k:"计时准了蛋黄才流心；冷水浸泡后更好剥壳。"},
+{n:"太阳蛋（煎蛋）",c:"早餐",e:"🍳",t:"5分钟",d:"超简单",m:"鸡蛋、油、盐、黑胡椒",s:[
+"平底锅中小火烧热，放少许油。",
+"打入鸡蛋，保持小火。",
+"盖上锅盖煎2分钟，蛋白凝固、蛋黄流心。",
+"撒盐和黑胡椒。"],k:"全程小火，盖锅盖蛋黄更嫩；想要单面嫩煎就别翻面。"},
+{n:"微波蒸蛋羹",c:"早餐",e:"🍮",t:"6分钟",d:"超简单",m:"鸡蛋、温水、盐、香油、葱花",s:[
+"鸡蛋打散，加1.5倍温水、少许盐搅匀。",
+"过筛去掉泡沫，更嫩滑。",
+"盖上保鲜膜，扎几个小孔。",
+"微波中火1分30秒，取出看状态，不够再加30秒。"],k:"水温约40℃、盖膜防溅；别一次叮太久，会变老。"},
+{n:"西红柿炒蛋",c:"早餐",e:"🍅",t:"10分钟",d:"超简单",m:"西红柿、鸡蛋、糖、盐、葱",s:[
+"鸡蛋加少许盐打散；西红柿切块。",
+"热油炒蛋，凝固后盛出。",
+"下西红柿炒出汁，加糖和盐。",
+"倒回鸡蛋翻炒均匀，撒葱花。"],k:"加一点糖提鲜去酸；蛋炒嫩一点更好吃。"},
+{n:"葱花鸡蛋饼",c:"早餐",e:"🥞",t:"12分钟",d:"简单",m:"面粉、鸡蛋、水、葱花、盐、油",s:[
+"面粉加鸡蛋、水、盐调成稀糊，加葱花。",
+"平底锅刷油烧热。",
+"倒一勺面糊晃匀摊薄。",
+"小火煎到两面金黄。"],k:"面糊调到像酸奶的稠度最好摊；全程小火不糊。"},
+{n:"火腿鸡蛋三明治",c:"早餐",e:"🥪",t:"10分钟",d:"超简单",m:"吐司、鸡蛋、火腿、生菜、沙拉酱或番茄酱",s:[
+"煎一个鸡蛋和火腿片。",
+"吐司烤一下（可选）。",
+"依次铺生菜、火腿、鸡蛋，抹酱。",
+"盖上另一片吐司，对角切开。"],k:"生菜要擦干水，吐司才不软塌。"},
+{n:"牛奶燕麦水果杯",c:"早餐",e:"🥣",t:"3分钟",d:"超简单",m:"即食燕麦、牛奶或酸奶、香蕉/蓝莓、蜂蜜、坚果",s:[
+"燕麦倒入杯中。",
+"加热牛奶或酸奶冲泡。",
+"放上切好的水果和坚果。",
+"淋一点蜂蜜。"],k:"前一晚泡好冷藏就是隔夜燕麦，更浓稠；总共30秒能搞定。"},
+{n:"葱油拌面",c:"早餐",e:"🍜",t:"15分钟",d:"简单",m:"面条、小葱、生抽、老抽、糖、油",s:[
+"小葱切段，冷油下锅小火炸到焦黄，捞出葱段。",
+"葱油加生抽、老抽、糖调成汁。",
+"面条煮熟捞出。",
+"淋葱油汁拌匀，放上葱段。"],k:"葱要小火慢慢炸香；面条别煮软，拌起来才筋道。"},
+{n:"皮蛋瘦肉粥",c:"早餐",e:"🥣",t:"50分钟",d:"简单",m:"大米、皮蛋、瘦肉、姜、葱、盐、白胡椒",s:[
+"大米洗净，加少许油和盐腌10分钟，更易开花。",
+"瘦肉切丝腌味，皮蛋切块。",
+"大米加水大火烧开，转小火熬40分钟。",
+"加皮蛋、肉丝再煮5分钟。",
+"加盐、白胡椒、葱花。"],k:"米先腌再熬粥才绵；用剩米饭更快。"},
+{n:"小米南瓜粥",c:"早餐",e:"🎃",t:"30分钟",d:"简单",m:"小米、南瓜、冰糖",s:[
+"小米洗净，南瓜去皮切小块。",
+"小米加水烧开。",
+"加南瓜块，小火熬25分钟。",
+"加冰糖搅匀。"],k:"南瓜自带甜味，糖可少放；熬到南瓜化开更香。"}
+];
+</script>
+<script>(function(){
+  var $ = function(s){ return document.querySelector(s); };
+  var CCOLOR = {'湘菜':'xiang','川菜':'chuan','徽菜':'hui','粤菜':'yue','早餐':'zaocan'};
+  var CHIPS = [
+    {k:'all', label:'全部'},
+    {k:'早餐', label:'🍳 早餐'},
+    {k:'湘菜', label:'🌶️ 湘菜'},
+    {k:'川菜', label:'🔥 川菜'},
+    {k:'徽菜', label:'🎋 徽菜'},
+    {k:'粤菜', label:'🦐 粤菜'},
+    {k:'fav', label:'⭐ 我的收藏'}
+  ];
+
+  DISHES.forEach(function(d,i){ d.id = i; });
+
+  var filter = 'all';
+  var query = '';  var favs = {};
+  try { (JSON.parse(localStorage.getItem('dishFavs')||'[]')).forEach(function(id){ favs[id]=1; }); } catch(e){}
+  function saveFavs(){
+    var arr=[]; for(var k in favs){ if(favs[k]) arr.push(+k); }
+    try{ localStorage.setItem('dishFavs', JSON.stringify(arr)); }catch(e){}
+  }
+
+  function pool(){
+    return DISHES.filter(function(d){
+      if (filter==='fav'){ if(!favs[d.id]) return false; }
+      else if (filter!=='all' && d.c!==filter) return false;
+      if (query && d.n.indexOf(query)<0 && d.m.indexOf(query)<0) return false;
+      return true;
+    });
+  }
+
+  function renderChips(){
+    var wrap = $('#chips'); wrap.innerHTML='';
+    CHIPS.forEach(function(c){
+      var b=document.createElement('button');
+      b.className='chip'+(filter===c.k?' active':'');
+      b.textContent=c.label;
+      b.onclick=function(){ filter=c.k; renderChips(); render(); };
+      wrap.appendChild(b);
+    });
+  }
+
+  function renderGrid(){
+    var p = pool();
+    var grid = $('#grid'); grid.innerHTML='';
+    if(!p.length){ grid.innerHTML='<div class="empty">没有符合条件的菜 🥲<br>换个筛选或清空搜索试试</div>'; return; }
+    p.forEach(function(d){
+      var card=document.createElement('div');
+      card.className='card'+(favs[d.id]?' faved':'');
+      card.innerHTML =
+        '<div class="fav">'+(favs[d.id]?'⭐':'☆')+'</div>'+
+        '<div class="thumb">'+(d.c==='早餐'?'<span class="badge">🌅 早餐</span>':'')+'<span class="emoji">'+d.e+'</span>'+
+          '<img class="photo" loading="lazy" src="images/'+d.id+'.png" onerror="this.remove()"></div>'+
+        '<div class="nm">'+d.n+'</div>'+
+        '<div class="mn"><span class="tag t-'+CCOLOR[d.c]+'">'+d.c+'</span>'+d.t+' · '+d.d+'</div>';
+      card.onclick=function(){ openDetail(d.id); };
+      grid.appendChild(card);
+    });
+  }
+
+  function renderStat(){
+    var p=pool();
+    var tot=DISHES.length;
+    var favN=0; for(var k in favs){ if(favs[k]) favN++; }
+    $('#stat').innerHTML = '共 <b>'+tot+'</b> 道名菜 · 当前筛出 <b>'+p.length+'</b> 道'+(favN?' · 收藏 <b>'+favN+'</b>':'');
+  }
+
+  function render(){ renderGrid(); renderStat(); }
+
+  // ---- random pick ----
+  function pickRandom(usePool){
+    var p = usePool || pool();
+    if(!p.length){ toast('没有符合条件的菜，先放宽筛选吧'); return; }
+    var ov=$('#roll'); ov.classList.add('show');
+    var nameEl=$('#rollName');
+    var n=0, total=20;
+    var timer=setInterval(function(){
+      nameEl.textContent = p[Math.floor(Math.random()*p.length)].n;
+      if(++n>=total){
+        clearInterval(timer);
+        var chosen = p[Math.floor(Math.random()*p.length)];
+        nameEl.textContent = chosen.n;
+        setTimeout(function(){ ov.classList.remove('show'); openDetail(chosen.id); }, 480);
+      }
+    }, 75);
+  }
+
+  // ---- detail ----
+  var curId=null;
+  function openDetail(id){
+    curId=id;
+    var d=DISHES[id];
+    var head=$('#sheetHead');
+    head.className='head bg-'+CCOLOR[d.c];
+    head.innerHTML =
+      '<button class="xclose" id="btnClose">✕</button>'+
+      '<div class="big">'+d.e+'</div>'+
+      '<h2>'+d.n+'</h2>'+
+      '<div class="tags"><span>'+d.c+'</span><span>⏱ '+d.t+'</span><span>难度：'+d.d+'</span></div>';
+    var stepsHtml = d.s.map(function(s){ return '<li>'+s+'</li>'; }).join('');
+    var body=$('#sheetBody');
+    body.innerHTML =
+      '<div class="banner"><img src="images/'+d.id+'.png" onload="this.parentNode.style.display=\'block\'" onerror="this.parentNode.remove()"></div>'+
+      '<div class="sec"><h3>所需食材</h3><div class="ing">'+d.m+'</div></div>'+
+      '<div class="sec"><h3>操作步骤</h3><ol class="steps">'+stepsHtml+'</ol></div>'+
+      '<div class="sec"><h3>小贴士</h3><div class="tip">💡 '+d.k+'</div></div>'+
+      '<div class="actions">'+
+        '<button class="btn-reroll" id="btnReroll">🎲 换一道</button>'+
+        '<button class="btn-fav'+(favs[d.id]?' on':'')+'" id="btnFav">'+(favs[d.id]?'⭐ 已收藏':'☆ 收藏')+'</button>'+
+      '</div>';
+    $('#modal').classList.add('show');
+    $('.sheet').scrollTop=0;
+    document.body.style.overflow='hidden';
+
+    $('#btnClose').onclick=closeDetail;
+    $('#btnReroll').onclick=function(){
+      closeDetail();
+      setTimeout(function(){ pickRandom(); }, 120);
+    };
+    $('#btnFav').onclick=function(){
+      if(favs[d.id]){ delete favs[d.id]; } else { favs[d.id]=1; }
+      saveFavs();
+      var on = !!favs[d.id];
+      this.className='btn-fav'+(on?' on':'');
+      this.textContent = on?'⭐ 已收藏':'☆ 收藏';
+      toast(on?'已加入收藏':'已取消收藏');
+      render();
+    };
+  }
+  function closeDetail(){
+    $('#modal').classList.remove('show');
+    document.body.style.overflow='';
+  }
+
+  var toastTimer;
+  function toast(msg){
+    var t=$('#toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.classList.remove('show'); },1600);
+  }
+
+  // events
+  $('#btnRoll').onclick=function(){ pickRandom(); };
+  $('#modal').onclick=function(e){ if(e.target===this) closeDetail(); };
+  $('#q').addEventListener('input', function(){ query=this.value.trim(); render(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDetail(); });
+
+  renderChips();
+  render();
+  var sub = document.getElementById('subtitle');
+  if (sub) sub.textContent = DISHES.length + ' 道 · 湘川徽粤 + ' + (DISHES.length-100) + ' 道快手早餐';
+
+  // deep link: index.html#dish=12  -> open a dish;  index.html#roll -> roll once
+  function handleHash(){
+    var fm = location.hash.match(/filter=([^&]+)/);
+    if(fm){ var f=decodeURIComponent(fm[1]); if(f==='all'||f==='fav'||CHIPS.some(function(c){return c.k===f;})){ filter=f; renderChips(); render(); } }
+    var m = location.hash.match(/dish=(\d+)/);
+    if(m){ var id=+m[1]; if(DISHES[id]) openDetail(id); }
+    else if(/roll/.test(location.hash)){ pickRandom(); }
+  }
+  window.addEventListener('hashchange', handleHash);
+  handleHash();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
